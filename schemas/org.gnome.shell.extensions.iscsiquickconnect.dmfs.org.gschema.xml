@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema id="org.gnome.shell.extensions.iscsiquickconnect.dmfs.org"
+        path="/org/gnome/shell/extensions/iscsiquickconnect.dmfs.org/">
+        <key name="portals" type="s">
+            <default>"{}"</default>
+            <summary>Configured portals</summary>
+            <description>The configured portals.</description>
+        </key>
+    </schema>
+</schemalist>

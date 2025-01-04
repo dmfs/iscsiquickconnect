@@ -1,0 +1,16 @@
+{
+    "name": "iSCSI Quick Connect",
+    "description": "Effortlessly manage iSCSI connections directly from your GNOME Shell.\n\nQuickly discover, connect, and disconnect iSCSI volumes.\n\nThis extensions requires udisks2 and the udisks2-iscsi module.",
+    "uuid": "iscsiquickconnect@dmfs.org",
+    "shell-version": [
+        "46",
+        "47"
+    ],
+    "version-name": "0.1.0",
+    "donations": {
+        "paypal": "dmfs"
+    },
+    "url": "https://github.com/dmfs/iscsiquickconnect",
+    "settings-schema": "org.gnome.shell.extensions.iscsiquickconnect.dmfs.org"
+
+}
