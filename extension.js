@@ -26,6 +26,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { EditableMenuItem } from './ui/menuitem.js';
 import { init as init_udisk2, udisks2_manager, iscsi_initiator, udisks2_object_manager, destroy as destroy_udisks2 } from './udisks2/udisks2.js'
 import { IscsiSession, UDisks2ISCSISession } from './udisks2/session.js';
+import { debug } from './utils/log.js';
 
 const Indicator = GObject.registerClass(
     class DmfsIscsiQuickConnectIndicator extends PanelMenu.Button {
@@ -47,7 +48,7 @@ const Indicator = GObject.registerClass(
 
             udisks2_manager
                 .then(udisks2 => udisks2.EnableModuleAsync("iscsi", true))
-                .then(any => log(`iscsi enabled`))
+                .then(any => debug(`iscsi enabled`))
                 .then(any => udisks2_object_manager)
                 .then(object_manager => object_manager.connectSignal("InterfacesAdded", this.onInterfaceAdded.bind(this)))
                 .then(any => udisks2_object_manager)
@@ -56,11 +57,11 @@ const Indicator = GObject.registerClass(
                 .then(object_manager => object_manager.GetManagedObjectsAsync())
                 .then(sessions => this.sessions = this.map_sessions(sessions))
                 .then(anything => this.update_menu())
-                .catch(e => log(`iscsi error: ${e}`))
+                .catch(e => debug(`iscsi error: ${e}`))
         }
 
         map_sessions(sessions) {
-            log("mapping sessions");
+            debug("mapping sessions");
             return new Map(sessions.flatMap(entry => Object.entries(entry))
                 .filter(entry => UDisks2ISCSISession in entry[1])
                 .map(entry => new IscsiSession(entry[0], entry[1][UDisks2ISCSISession]))
@@ -68,7 +69,7 @@ const Indicator = GObject.registerClass(
         }
 
         update_menu() {
-            log("updating menu");
+            debug("updating menu");
             this.menu.removeAll();
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem("Targets"))
             for (const [portal, portal_data] of this.portals) {
@@ -77,16 +78,16 @@ const Indicator = GObject.registerClass(
                         const target_item = new PopupMenu.PopupSwitchMenuItem(target[0], false)
                         target_item.connect('activate', () =>
                         (this.sessions && this.sessions.has(target[0])
-                            ? this.sessions.get(target[0])?.logout().catch(e => log(e))
+                            ? this.sessions.get(target[0])?.logout().catch(e => debug(e))
                             : iscsi_initiator.then(iscsi => iscsi.LoginAsync(...target))
                                 .catch(error => {
-                                    log(error);
+                                    debug(error);
                                     udisks2_object_manager.then(manager => manager.GetManagedObjectsAsync())
                                         .then(sessions => this.sessions = this.map_sessions(sessions))
                                         .then(anything => this.update_menu())
                                         .catch(error => {
                                             this.update_menu();
-                                            log(error);
+                                            debug(error);
                                         });
                                 }
                                 )));
@@ -121,19 +122,19 @@ const Indicator = GObject.registerClass(
         discover_send_targets(portal, enable = true) {
             iscsi_initiator.then(iscsi => iscsi.DiscoverSendTargetsAsync(portal, 0, []))
                 .then(([targets, count]) => {
-                    log(targets);
+                    debug(targets);
                     this.portals.set(portal, { "targets": targets, "enabled": enable });
                     this.settings.set_string("portals", JSON.stringify(Object.fromEntries(this.portals)));
                     this.update_menu();
                 })
                 .then(any => this.menu.close(true))
-                .catch(error => log(error)) // TODO: show error
+                .catch(error => debug(error)) // TODO: show error
         }
 
         onInterfaceAdded(proxy, nameOwner, [object_path, interfaces]) {
             if (UDisks2ISCSISession in interfaces) {
                 const session = new IscsiSession(object_path, interfaces[UDisks2ISCSISession]);
-                log(`registering session for ${session.target()}`);
+                debug(`registering session for ${session.target()}`);
                 this.sessions.set(session.target(), session);
                 this.update_menu();
             }
@@ -143,7 +144,7 @@ const Indicator = GObject.registerClass(
             if (interfaces.includes(UDisks2ISCSISession)) {
                 const target = Array.from(this.sessions).filter(([key, value]) => value.dbus_object_name === object_path)?.[0]?.[0];
                 if (target) {
-                    log(`unregistering session for ${target}`);
+                    debug(`unregistering session for ${target}`);
                     this.sessions.get(target)?.destroy();
                     this.sessions.delete(target);
                     this.update_menu();
