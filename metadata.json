@@ -4,9 +4,10 @@
     "uuid": "iscsiquickconnect@dmfs.org",
     "shell-version": [
         "46",
-        "47"
+        "47",
+        "48"
     ],
-    "version-name": "0.1.0",
+    "version-name": "0.2.0",
     "donations": {
         "paypal": "dmfs"
     },
