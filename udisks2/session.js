@@ -19,11 +19,11 @@ import Gio from "gi://Gio";
 
 import { create_proxy } from "./udisks2.js";
 
-const UDisks2ISCSISession = "org.freedesktop.UDisks2.ISCSI.Session";
+const UDISKS2_ISCSI_SESSION = "org.freedesktop.UDisks2.ISCSI.Session";
 
 const IscsiSessionProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
-        <interface name="${UDisks2ISCSISession}">
+        <interface name="${UDISKS2_ISCSI_SESSION}">
             <method name="Logout">
                 <arg name="options" type="a{sv}" direction="in"/>
             </method>
@@ -55,4 +55,4 @@ class IscsiSession {
   }
 }
 
-export { IscsiSession, UDisks2ISCSISession };
+export { IscsiSession, UDISKS2_ISCSI_SESSION };
