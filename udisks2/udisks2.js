@@ -16,6 +16,7 @@
  */
 
 import Gio from "gi://Gio";
+import { debug } from "../utils/log.js";
 
 const UDisks2ObjectManagerProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
@@ -50,18 +51,19 @@ const IscsiInitiatorProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
         <interface name="org.freedesktop.UDisks2.Manager.ISCSI.Initiator">
             <method name="DiscoverSendTargets">
-                <arg name="address" type="s" direction="in"/>
-                <arg name="port" type="q" direction="in"/>
-                <arg name="options" type="a{sv}" direction="in"/>
-                <arg name="targets" type="a(sisis)i" direction="out"/>
+                <arg type="s" name="address" direction="in"/>
+                <arg type="q" name="port" direction="in"/>
+                <arg type="a{sv}" name="options" direction="in"/>
+                <arg type="a(sisis)" name="nodes" direction="out"/>
+                <arg type="i" name="nodes_cnt" direction="out"/>
             </method>
             <method name="Login">
-                <arg name="target_name" type="s" direction="in"/>
-                <arg name="tpgt" type="i" direction="in"/>
-                <arg name="address" type="s" direction="in"/>
-                <arg name="port" type="i" direction="in"/>
-                <arg name="iface" type="s" direction="in"/>
-                <arg name="options" type="a{sv}" direction="in"/>
+                <arg type="s" name="name" direction="in"/>
+                <arg type="i" name="tpgt" direction="in"/>
+                <arg type="s" name="address" direction="in"/>
+                <arg type="i" name="port" direction="in"/>
+                <arg type="s" name="iface" direction="in"/>
+                <arg type="a{sv}" name="options" direction="in"/>
             </method>
         </interface>
     </node>
@@ -84,28 +86,35 @@ var udisks2_object_manager;
 var udisks2_manager;
 var iscsi_initiator;
 
-function init() {
-  udisks2_object_manager = create_proxy(
+async function init() {
+  debug("Initializing udisks2 D-Bus proxy...");
+
+  udisks2_object_manager = await create_proxy(
     UDisks2ObjectManagerProxy,
     "org.freedesktop.UDisks2",
     "/org/freedesktop/UDisks2",
   );
-  udisks2_manager = create_proxy(
+
+  udisks2_manager = await create_proxy(
     UDisks2ManagerProxy,
     "org.freedesktop.UDisks2",
     "/org/freedesktop/UDisks2/Manager",
   );
-  iscsi_initiator = create_proxy(
+
+  iscsi_initiator = await create_proxy(
     IscsiInitiatorProxy,
     "org.freedesktop.UDisks2",
     "/org/freedesktop/UDisks2/Manager",
   );
+
+  debug("UDisks2 proxy initialization complete");
 }
 
 function destroy() {
   udisks2_object_manager = null;
   udisks2_manager = null;
   iscsi_initiator = null;
+  debug("UDisks2 proxy destroyed");
 }
 
 export {

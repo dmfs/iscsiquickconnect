@@ -31,7 +31,7 @@ import {
   udisks2_object_manager,
   destroy as destroy_udisks2,
 } from "./udisks2/udisks2.js";
-import { IscsiSession, UDisks2ISCSISession } from "./udisks2/session.js";
+import { IscsiSession, UDISKS2_ISCSI_SESSION } from "./udisks2/session.js";
 import { debug } from "./utils/log.js";
 
 const Indicator = GObject.registerClass(
@@ -54,7 +54,9 @@ const Indicator = GObject.registerClass(
       this.add_child(this.label);
       this.setMenu(new PopupMenu.PopupMenu(this, 0.0, St.Side.TOP, 0));
 
-      udisks2_manager
+      debug("Starting ISCSI");
+      init_udisk2()
+        .then((any) => udisks2_manager)
         .then((udisks2) => udisks2.EnableModuleAsync("iscsi", true))
         .then((any) => debug(`iscsi enabled`))
         .then((any) => udisks2_object_manager)
@@ -83,10 +85,10 @@ const Indicator = GObject.registerClass(
       return new Map(
         sessions
           .flatMap((entry) => Object.entries(entry))
-          .filter((entry) => UDisks2ISCSISession in entry[1])
+          .filter((entry) => UDISKS2_ISCSI_SESSION in entry[1])
           .map(
             (entry) =>
-              new IscsiSession(entry[0], entry[1][UDisks2ISCSISession]),
+              new IscsiSession(entry[0], entry[1][UDISKS2_ISCSI_SESSION]),
           )
           .map((session) => [session.target(), session]),
       );
@@ -109,22 +111,20 @@ const Indicator = GObject.registerClass(
                     .get(target[0])
                     ?.logout()
                     .catch((e) => debug(e))
-                : iscsi_initiator
-                    .then((iscsi) => iscsi.LoginAsync(...target))
-                    .catch((error) => {
-                      debug(error);
-                      udisks2_object_manager
-                        .then((manager) => manager.GetManagedObjectsAsync())
-                        .then(
-                          (sessions) =>
-                            (this.sessions = this.map_sessions(sessions)),
-                        )
-                        .then((anything) => this.update_menu())
-                        .catch((error) => {
-                          this.update_menu();
-                          debug(error);
-                        });
-                    }),
+                : iscsi_initiator.LoginAsync(...target).catch((error) => {
+                    debug(error);
+                    udisks2_object_manager
+                      .GetManagedObjectsAsync()
+                      .then(
+                        (sessions) =>
+                          (this.sessions = this.map_sessions(sessions)),
+                      )
+                      .then((anything) => this.update_menu())
+                      .catch((error) => {
+                        this.update_menu();
+                        debug(error);
+                      });
+                  }),
             );
 
             target_item.setToggleState(
@@ -163,7 +163,7 @@ const Indicator = GObject.registerClass(
 
     discover_send_targets(portal, enable = true) {
       iscsi_initiator
-        .then((iscsi) => iscsi.DiscoverSendTargetsAsync(portal, 0, []))
+        .DiscoverSendTargetsAsync(portal, 0, [])
         .then(([targets, count]) => {
           debug(targets);
           this.portals.set(portal, { targets: targets, enabled: enable });
@@ -178,10 +178,10 @@ const Indicator = GObject.registerClass(
     }
 
     onInterfaceAdded(proxy, nameOwner, [object_path, interfaces]) {
-      if (UDisks2ISCSISession in interfaces) {
+      if (UDISKS2_ISCSI_SESSION in interfaces) {
         const session = new IscsiSession(
           object_path,
-          interfaces[UDisks2ISCSISession],
+          interfaces[UDISKS2_ISCSI_SESSION],
         );
         debug(`registering session for ${session.target()}`);
         this.sessions.set(session.target(), session);
@@ -190,7 +190,7 @@ const Indicator = GObject.registerClass(
     }
 
     onInterfaceRemoved(proxy, nameOwner, [object_path, interfaces]) {
-      if (interfaces.includes(UDisks2ISCSISession)) {
+      if (interfaces.includes(UDISKS2_ISCSI_SESSION)) {
         const target = Array.from(this.sessions).filter(
           ([key, value]) => value.dbus_object_name === object_path,
         )?.[0]?.[0];
@@ -216,7 +216,6 @@ export default class IscsiToolExtension extends Extension {
   }
 
   enable() {
-    init_udisk2();
     this._indicator = new Indicator(this.getSettings());
     Main.panel.addToStatusArea(this.metadata.uuid, this._indicator);
   }
