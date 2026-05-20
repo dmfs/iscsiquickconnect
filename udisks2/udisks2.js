@@ -15,7 +15,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-import Gio from 'gi://Gio';
+import Gio from "gi://Gio";
 
 const UDisks2ObjectManagerProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
@@ -35,7 +35,6 @@ const UDisks2ObjectManagerProxy = Gio.DBusProxy.makeProxyWrapper(`
     </node>
     `);
 
-
 const UDisks2ManagerProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
         <interface name="org.freedesktop.UDisks2.Manager">
@@ -46,7 +45,6 @@ const UDisks2ManagerProxy = Gio.DBusProxy.makeProxyWrapper(`
         </interface>
     </node>
     `);
-
 
 const IscsiInitiatorProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
@@ -62,22 +60,24 @@ const IscsiInitiatorProxy = Gio.DBusProxy.makeProxyWrapper(`
                 <arg name="tpgt" type="i" direction="in"/>
                 <arg name="address" type="s" direction="in"/>
                 <arg name="port" type="i" direction="in"/>
-                <arg name="iface" type="s" direction="in"/>     
+                <arg name="iface" type="s" direction="in"/>
                 <arg name="options" type="a{sv}" direction="in"/>
             </method>
         </interface>
     </node>
     `);
 
-
 async function create_proxy(class_name, ...args) {
-    return new Promise((resolve, reject) =>
-        new class_name(Gio.DBus.system, ...args,
-            (proxy, error) => {
-                if (error) { reject(error); }
-                else { resolve(proxy); }
-            },
-        ));
+  return new Promise(
+    (resolve, reject) =>
+      new class_name(Gio.DBus.system, ...args, (proxy, error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(proxy);
+        }
+      }),
+  );
 }
 
 var udisks2_object_manager;
@@ -85,15 +85,34 @@ var udisks2_manager;
 var iscsi_initiator;
 
 function init() {
-    udisks2_object_manager = create_proxy(UDisks2ObjectManagerProxy, 'org.freedesktop.UDisks2', '/org/freedesktop/UDisks2');
-    udisks2_manager = create_proxy(UDisks2ManagerProxy, 'org.freedesktop.UDisks2', '/org/freedesktop/UDisks2/Manager');
-    iscsi_initiator = create_proxy(IscsiInitiatorProxy, 'org.freedesktop.UDisks2', '/org/freedesktop/UDisks2/Manager');
+  udisks2_object_manager = create_proxy(
+    UDisks2ObjectManagerProxy,
+    "org.freedesktop.UDisks2",
+    "/org/freedesktop/UDisks2",
+  );
+  udisks2_manager = create_proxy(
+    UDisks2ManagerProxy,
+    "org.freedesktop.UDisks2",
+    "/org/freedesktop/UDisks2/Manager",
+  );
+  iscsi_initiator = create_proxy(
+    IscsiInitiatorProxy,
+    "org.freedesktop.UDisks2",
+    "/org/freedesktop/UDisks2/Manager",
+  );
 }
 
 function destroy() {
-    udisks2_object_manager = null;
-    udisks2_manager = null;
-    iscsi_initiator = null;
+  udisks2_object_manager = null;
+  udisks2_manager = null;
+  iscsi_initiator = null;
 }
 
-export { init, create_proxy, udisks2_object_manager, udisks2_manager, iscsi_initiator, destroy }
+export {
+  init,
+  create_proxy,
+  udisks2_object_manager,
+  udisks2_manager,
+  iscsi_initiator,
+  destroy,
+};

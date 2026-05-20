@@ -15,11 +15,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-import Gio from 'gi://Gio';
+import Gio from "gi://Gio";
 
 import { create_proxy } from "./udisks2.js";
 
-const UDisks2ISCSISession = 'org.freedesktop.UDisks2.ISCSI.Session';
+const UDisks2ISCSISession = "org.freedesktop.UDisks2.ISCSI.Session";
 
 const IscsiSessionProxy = Gio.DBusProxy.makeProxyWrapper(`
     <node>
@@ -32,23 +32,27 @@ const IscsiSessionProxy = Gio.DBusProxy.makeProxyWrapper(`
     `);
 
 class IscsiSession {
-    constructor(dbus_object_name, session_object) {
-        this.session_proxy = create_proxy(IscsiSessionProxy, 'org.freedesktop.UDisks2', dbus_object_name);
-        this.dbus_object_name = dbus_object_name;
-        this.session_object = session_object;
-    }
+  constructor(dbus_object_name, session_object) {
+    this.session_proxy = create_proxy(
+      IscsiSessionProxy,
+      "org.freedesktop.UDisks2",
+      dbus_object_name,
+    );
+    this.dbus_object_name = dbus_object_name;
+    this.session_object = session_object;
+  }
 
-    target() {
-        return this.session_object.target_name?.deep_unpack();
-    }
+  target() {
+    return this.session_object.target_name?.deep_unpack();
+  }
 
-    async logout() {
-        return await (await this.session_proxy).LogoutAsync();
-    }
+  async logout() {
+    return await (await this.session_proxy).LogoutAsync();
+  }
 
-    destroy() {
-        this.session_proxy = null;
-    }
+  destroy() {
+    this.session_proxy = null;
+  }
 }
 
-export { IscsiSession, UDisks2ISCSISession }
+export { IscsiSession, UDisks2ISCSISession };
